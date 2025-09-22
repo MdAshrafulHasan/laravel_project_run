@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // Customize as per your setup
+        
         PHP_VERSION = "8.2"
         DB_DATABASE = "laravel"
         DB_USERNAME = "laravel"
