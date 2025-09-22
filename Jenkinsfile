@@ -1,9 +1,16 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'laravelsail/php82-composer'  // PHP 8.2 + Composer image
+            args '-u root:root'                // run as root to avoid permission issues
+        }
+    }
 
     environment {
-        
         PHP_VERSION = "8.2"
+        DB_CONNECTION = "mysql"
+        DB_HOST = "host.docker.internal"   // so container can reach your local MySQL
+        DB_PORT = "3307"
         DB_DATABASE = "laravel"
         DB_USERNAME = "laravel"
         DB_PASSWORD = "secret"
