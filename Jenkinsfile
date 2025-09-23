@@ -2,13 +2,13 @@ pipeline {
     agent {
         docker {
             image 'laravel-build:latest'
-            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock --network=laravel_net'
         }
     }
 
     environment {
         DB_CONNECTION = "mysql"
-        DB_HOST = "laravel_db"       // must match service name in docker-compose.yml
+        DB_HOST = "laravel_db"
         DB_PORT = "3306"
         DB_DATABASE = "laravel"
         DB_USERNAME = "laravel"
@@ -17,21 +17,8 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                git branch: 'master', url: 'https://github.com/MdAshrafulHasan/laravel_project_run.git'
-            }
+            steps { git branch: 'master', url: 'https://github.com/MdAshrafulHasan/laravel_project_run.git' }
         }
-
-        // stage('Start Services') {
-        //     steps {
-        //         sh '''
-        //             echo "📦 Starting DB service..."
-        //             docker compose up -d laravel_db || docker-compose up -d laravel_db
-        //             echo "⏳ Waiting for DB to be ready..."
-        //             sleep 20
-        //         '''
-        //     }
-        // }
 
         stage('Install Dependencies') {
             steps {
@@ -44,12 +31,7 @@ pipeline {
         }
 
         stage('Run Migrations') {
-            steps {
-                sh '''
-                    php artisan config:clear
-                    php artisan migrate --force
-                '''
-            }
+            steps { sh 'php artisan migrate --force' }
         }
 
         stage('Run Tests') {
@@ -65,27 +47,16 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t laravel-app .'
-            }
+            steps { sh 'docker build -t laravel-app .' }
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                    docker compose up -d || docker-compose up -d
-                    echo "🚀 Laravel app deployed successfully!"
-                '''
-            }
+            steps { sh 'docker compose up -d || docker-compose up -d' }
         }
     }
 
     post {
-        always {
-            echo "✅ Pipeline finished!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
-        }
+        always { echo "✅ Pipeline finished!" }
+        failure { echo "❌ Pipeline failed!" }
     }
 }
