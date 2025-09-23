@@ -16,10 +16,10 @@ pipeline {
 
         stage('Start Services') {
             steps {
-                echo '📦 Cleaning old DB container if exists...'
-                sh "docker rm -f ${DB_CONTAINER} || true"
+                echo '📦 Cleaning old containers if they exist...'
+                sh "docker rm -f ${DB_CONTAINER} ${APP_CONTAINER} || true"
 
-                echo '📦 Starting DB service...'
+                echo '📦 Starting DB and App services...'
                 sh "docker-compose up -d ${DB_CONTAINER} ${APP_CONTAINER}"
             }
         }
