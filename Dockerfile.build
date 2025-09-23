@@ -1,0 +1,4 @@
+FROM laravelsail/php82-composer
+
+# Install MySQL PDO extension
+RUN docker-php-ext-install pdo pdo_mysql

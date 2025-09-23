@@ -1,15 +1,15 @@
 pipeline {
     agent {
         docker {
-            image 'laravelsail/php82-composer' // PHP + Composer + Node + MySQL client
-            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock' // run as root + access Docker
+            image 'laravel-build:latest' // custom build image
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         DB_CONNECTION = "mysql"
-        DB_HOST = "host.docker.internal"
-        DB_PORT = "3307"
+        DB_HOST = "laravel_db"   // use service name from docker-compose
+        DB_PORT = "3306"
         DB_DATABASE = "laravel"
         DB_USERNAME = "laravel"
         DB_PASSWORD = "secret"
