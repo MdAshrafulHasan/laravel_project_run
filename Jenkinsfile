@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'laravelsail/php82-composer' // includes PHP + Composer
-            args '-u root:root' // run as root to avoid permission issues
+            image 'laravelsail/php82-composer' // PHP + Composer + Node + MySQL client
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock' // run as root + access Docker
         }
     }
 
@@ -24,9 +24,11 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'composer install --no-interaction --prefer-dist --optimize-autoloader'
-                sh 'cp .env.example .env || true'
-                sh 'php artisan key:generate'
+                sh '''
+                    composer install --no-interaction --prefer-dist --optimize-autoloader
+                    cp .env.example .env || true
+                    php artisan key:generate
+                '''
             }
         }
 
@@ -38,7 +40,13 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh './vendor/bin/phpunit || true' // allow to continue if no tests yet
+                sh '''
+                    if [ -f ./vendor/bin/phpunit ]; then
+                        ./vendor/bin/phpunit
+                    else
+                        echo "⚠️ No tests found, skipping..."
+                    fi
+                '''
             }
         }
 
@@ -50,14 +58,18 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "🚀 Deploy step goes here (e.g., docker-compose up -d)"
+                sh 'docker compose up -d || docker-compose up -d'
+                echo "🚀 Laravel app deployed successfully!"
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline finished!"
+            echo "✅ Pipeline finished!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
