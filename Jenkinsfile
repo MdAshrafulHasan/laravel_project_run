@@ -1,14 +1,14 @@
 pipeline {
     agent {
         docker {
-            image 'laravel-build:latest' // custom build image
+            image 'laravel-build:latest'
             args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         DB_CONNECTION = "mysql"
-        DB_HOST = "laravel_db"   // use service name from docker-compose
+        DB_HOST = "laravel_db"       // must match service name in docker-compose.yml
         DB_PORT = "3306"
         DB_DATABASE = "laravel"
         DB_USERNAME = "laravel"
@@ -19,6 +19,17 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'master', url: 'https://github.com/MdAshrafulHasan/laravel_project_run.git'
+            }
+        }
+
+        stage('Start Services') {
+            steps {
+                sh '''
+                    echo "📦 Starting DB service..."
+                    docker compose up -d laravel_db || docker-compose up -d laravel_db
+                    echo "⏳ Waiting for DB to be ready..."
+                    sleep 20
+                '''
             }
         }
 
@@ -34,7 +45,10 @@ pipeline {
 
         stage('Run Migrations') {
             steps {
-                sh 'php artisan migrate --force'
+                sh '''
+                    php artisan config:clear
+                    php artisan migrate --force
+                '''
             }
         }
 
@@ -58,8 +72,10 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh 'docker compose up -d || docker-compose up -d'
-                echo "🚀 Laravel app deployed successfully!"
+                sh '''
+                    docker compose up -d || docker-compose up -d
+                    echo "🚀 Laravel app deployed successfully!"
+                '''
             }
         }
     }
