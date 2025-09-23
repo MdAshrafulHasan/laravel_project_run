@@ -19,8 +19,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy existing Laravel project (optional if Jenkins will checkout repo)
-# COPY . .
+# Copy Laravel project into container
+COPY . /var/www
 
 # Default command
-CMD ["php", "-a"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
