@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'composer:2' // includes PHP + Composer
+            image 'laravelsail/php82-composer' // includes PHP + Composer
             args '-u root:root' // run as root to avoid permission issues
         }
     }
