@@ -22,16 +22,16 @@ pipeline {
             }
         }
 
-        stage('Start Services') {
-            steps {
-                sh '''
-                    echo "📦 Starting DB service..."
-                    docker compose up -d laravel_db || docker-compose up -d laravel_db
-                    echo "⏳ Waiting for DB to be ready..."
-                    sleep 20
-                '''
-            }
-        }
+        // stage('Start Services') {
+        //     steps {
+        //         sh '''
+        //             echo "📦 Starting DB service..."
+        //             docker compose up -d laravel_db || docker-compose up -d laravel_db
+        //             echo "⏳ Waiting for DB to be ready..."
+        //             sleep 20
+        //         '''
+        //     }
+        // }
 
         stage('Install Dependencies') {
             steps {
