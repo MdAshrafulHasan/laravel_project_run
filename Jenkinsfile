@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'laravel-build:latest'
-            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock --network=laravel_net'
-        }
-    }
+    agent any
 
     environment {
         DB_CONNECTION = "mysql"
@@ -17,46 +12,77 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps { git branch: 'master', url: 'https://github.com/MdAshrafulHasan/laravel_project_run.git' }
+            steps {
+                git branch: 'master', url: 'https://github.com/MdAshrafulHasan/laravel_project_run.git'
+            }
+        }
+
+        stage('Start Services') {
+            steps {
+                sh '''
+                    echo "📦 Starting DB service..."
+                    docker-compose up -d laravel_db
+                '''
+            }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    composer install --no-interaction --prefer-dist --optimize-autoloader
-                    cp .env.example .env || true
-                    php artisan key:generate
+                    docker-compose run --rm laravel_app bash -c "
+                        composer install --no-interaction --prefer-dist --optimize-autoloader &&
+                        cp .env.example .env || true &&
+                        php artisan key:generate
+                    "
                 '''
             }
         }
 
         stage('Run Migrations') {
-            steps { sh 'php artisan migrate --force' }
+            steps {
+                sh '''
+                    docker-compose run --rm laravel_app bash -c "
+                        php artisan config:clear &&
+                        php artisan migrate --force
+                    "
+                '''
+            }
         }
 
         stage('Run Tests') {
             steps {
                 sh '''
-                    if [ -f ./vendor/bin/phpunit ]; then
-                        ./vendor/bin/phpunit
-                    else
-                        echo "⚠️ No tests found, skipping..."
-                    fi
+                    docker-compose run --rm laravel_app bash -c "
+                        if [ -f ./vendor/bin/phpunit ]; then
+                            ./vendor/bin/phpunit
+                        else
+                            echo '⚠️ No tests found, skipping...'
+                        fi
+                    "
                 '''
             }
         }
 
         stage('Build Docker Image') {
-            steps { sh 'docker build -t laravel-app .' }
+            steps {
+                sh 'docker build -t laravel-app .'
+            }
         }
 
         stage('Deploy') {
-            steps { sh 'docker compose up -d || docker-compose up -d' }
+            steps {
+                sh 'docker-compose up -d laravel_app || docker compose up -d laravel_app'
+                echo "🚀 Laravel app deployed successfully!"
+            }
         }
     }
 
     post {
-        always { echo "✅ Pipeline finished!" }
-        failure { echo "❌ Pipeline failed!" }
+        always {
+            echo "✅ Pipeline finished!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+        }
     }
 }
