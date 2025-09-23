@@ -19,8 +19,11 @@ pipeline {
 
         stage('Start Services') {
             steps {
+                
                 sh '''
-                    echo "📦 Starting DB service..."
+                    echo 📦 Cleaning old DB container if exists...
+                    docker rm -f laravel_db || true
+                    echo 📦 Starting DB service...
                     docker-compose up -d laravel_db
                 '''
             }
