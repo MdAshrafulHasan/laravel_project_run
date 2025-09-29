@@ -1,3 +1,4 @@
+# Use official PHP 8.2 CLI image
 FROM php:8.2-cli
 
 # Install system dependencies
@@ -22,5 +23,9 @@ WORKDIR /var/www
 # Copy Laravel project into container
 COPY . /var/www
 
-# Default command
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Ensure permissions (optional, but helps with Laravel)
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www
+
+# Keep the container running by default
+CMD ["tail", "-f", "/dev/null"]
