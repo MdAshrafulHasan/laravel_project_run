@@ -1,47 +1,46 @@
-name: Laravel CI/CD
+name: Laravel CI
 
 on:
   push:
-    branches: [ "main" ]   # 👈 Run pipeline on master branch pushes
+    branches: [ "main" ]   # Run pipeline on main branch
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  laravel-pipeline:
+  laravel-ci:
     runs-on: ubuntu-latest
-
-    env:
-      APP_CONTAINER: laravel_app
-      DB_CONTAINER: laravel_db
 
     steps:
       - name: 📥 Checkout source code
         uses: actions/checkout@v3
 
-      - name: 🐳 Set up Docker Compose
-        run: |
-          docker compose version || sudo apt-get update && sudo apt-get install -y docker-compose
+      - name: ⚡ Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, sqlite
+          coverage: xdebug
 
-      - name: 📦 Start DB and App services
-        run: |
-          docker compose rm -fsv ${DB_CONTAINER} ${APP_CONTAINER} || true
-          docker compose up -d ${DB_CONTAINER} ${APP_CONTAINER}
-          sleep 20  # wait for DB to initialize
+      - name: 🔄 Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
-      - name: 📦 Install PHP dependencies
-        run: |
-          docker exec ${APP_CONTAINER} bash -c "
-            composer install --no-interaction --prefer-dist --optimize-autoloader &&
-            cp .env.example .env || true &&
-            php artisan key:generate
-          "
+      - name: 📦 Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
-      - name: 🗄 Run database migrations
+      - name: 🗂 Setup environment
         run: |
-          docker exec ${APP_CONTAINER} php artisan migrate --force
+          cp .env.example .env
+          php artisan key:generate
 
       - name: 🧪 Run Laravel tests
-        run: |
-          docker exec ${APP_CONTAINER} php artisan test
+        run: php artisan test --env=testing
 
-      - name: 🐳 Build Docker image
-        run: |
-          docker compose build ${APP_CONTAINER}
+      - name: 🔍 Optional: Run static analysis (PHPStan)
+        run: vendor/bin/phpstan analyse
+
+      - name: ✨ Optional: Run Laravel Pint (code style)
+        run: vendor/bin/pint --test
