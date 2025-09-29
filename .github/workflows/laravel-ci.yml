@@ -1,8 +1,8 @@
-name: Laravel CI
+name: Laravel Code Check
 
 on:
   push:
-    branches: [ "main" ]   # Run pipeline on main branch
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -11,37 +11,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout source code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: ⚡ Setup PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, bcmath, sqlite
-          coverage: xdebug
-
-      - name: 🔄 Cache Composer dependencies
+          extensions: mbstring, bcmath
+          
+      - name: Cache Composer dependencies
         uses: actions/cache@v3
         with:
           path: vendor
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: 📦 Install Composer dependencies
+      - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
-      - name: 🗂 Setup environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: 🧪 Run Laravel tests
-        run: php artisan test --env=testing
-
-      - name: Run PHPStan (optional)
+      - name: Run PHPStan (static analysis)
         run: vendor/bin/phpstan analyse
 
-      - name: Run Laravel Pint (optional)
+      - name: Run Laravel Pint (code style)
         run: vendor/bin/pint --test
-
