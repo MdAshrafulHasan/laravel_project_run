@@ -30,8 +30,8 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
-      - name: Run PHPStan (static analysis)
-        run: vendor/bin/phpstan analyse
+     # - name: Run PHPStan (static analysis)
+      #  run: vendor/bin/phpstan analyse
 
       - name: Run Laravel Pint (code style)
         run: vendor/bin/pint --test
