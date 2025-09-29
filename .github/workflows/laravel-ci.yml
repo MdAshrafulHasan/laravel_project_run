@@ -39,8 +39,9 @@ jobs:
       - name: 🧪 Run Laravel tests
         run: php artisan test --env=testing
 
-      - name: 🔍 Optional: Run static analysis (PHPStan)
+      - name: Run PHPStan (optional)
         run: vendor/bin/phpstan analyse
 
-      - name: ✨ Optional: Run Laravel Pint (code style)
+      - name: Run Laravel Pint (optional)
         run: vendor/bin/pint --test
+
