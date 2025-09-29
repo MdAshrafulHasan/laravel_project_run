@@ -7,16 +7,17 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./:/var/www   # maps local Laravel project into container
+      - ./:/var/www   # map local Laravel project into container
     ports:
       - "8000:8000"
     depends_on:
-      - laravel_db
-    command: php artisan serve --host=0.0.0.0 --port=8080
+      laravel_db:
+        condition: service_healthy
+    command: php artisan serve --host=0.0.0.0 --port=8000
     environment:
       DB_CONNECTION: mysql
       DB_HOST: laravel_db   # connect via Docker service name
-      DB_PORT: 3306         # MySQL internal port, not host port
+      DB_PORT: 3306         # MySQL internal port
       DB_DATABASE: laravel
       DB_USERNAME: laravel
       DB_PASSWORD: secret
@@ -38,6 +39,11 @@ services:
       - db_data:/var/lib/mysql
     networks:
       - laravel_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
 
   jenkins:
     build:
