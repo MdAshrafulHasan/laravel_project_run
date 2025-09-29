@@ -1,0 +1,47 @@
+name: Laravel CI/CD
+
+on:
+  push:
+    branches: [ "master" ]   # 👈 Run pipeline on master branch pushes
+
+jobs:
+  laravel-pipeline:
+    runs-on: ubuntu-latest
+
+    env:
+      APP_CONTAINER: laravel_app
+      DB_CONTAINER: laravel_db
+
+    steps:
+      - name: 📥 Checkout source code
+        uses: actions/checkout@v3
+
+      - name: 🐳 Set up Docker Compose
+        run: |
+          docker compose version || sudo apt-get update && sudo apt-get install -y docker-compose
+
+      - name: 📦 Start DB and App services
+        run: |
+          docker compose rm -fsv ${DB_CONTAINER} ${APP_CONTAINER} || true
+          docker compose up -d ${DB_CONTAINER} ${APP_CONTAINER}
+          sleep 20  # wait for DB to initialize
+
+      - name: 📦 Install PHP dependencies
+        run: |
+          docker exec ${APP_CONTAINER} bash -c "
+            composer install --no-interaction --prefer-dist --optimize-autoloader &&
+            cp .env.example .env || true &&
+            php artisan key:generate
+          "
+
+      - name: 🗄 Run database migrations
+        run: |
+          docker exec ${APP_CONTAINER} php artisan migrate --force
+
+      - name: 🧪 Run Laravel tests
+        run: |
+          docker exec ${APP_CONTAINER} php artisan test
+
+      - name: 🐳 Build Docker image
+        run: |
+          docker compose build ${APP_CONTAINER}
