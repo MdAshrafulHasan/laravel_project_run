@@ -2,7 +2,7 @@ name: Laravel CI/CD
 
 on:
   push:
-    branches: [ "master" ]   # 👈 Run pipeline on master branch pushes
+    branches: [ "main" ]   # 👈 Run pipeline on master branch pushes
 
 jobs:
   laravel-pipeline:
