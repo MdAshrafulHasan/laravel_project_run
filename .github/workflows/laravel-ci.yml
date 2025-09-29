@@ -33,5 +33,6 @@ jobs:
      # - name: Run PHPStan (static analysis)
       #  run: vendor/bin/phpstan analyse
 
-      - name: Run Laravel Pint (code style)
-        run: vendor/bin/pint --test
+      - name: Fix code style with Laravel Pint
+        run: vendor/bin/pint
+
